@@ -1,0 +1,26 @@
+<html>
+<head>
+  <title></title>
+</head>
+<body>
+
+  <script src="../dist/aws-sdk-browser.js"></script>
+
+  <script type="text/javascript">
+
+    //eg from http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
+    AWS.config.update({
+      accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+      secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+    });
+
+    var bucket = new AWS.S3();
+
+    bucket.getObject('foo.js', function(a,b,c) {
+      console.log(a)
+    });
+
+  </script>
+
+</body>
+</html>
