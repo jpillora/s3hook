@@ -1,0 +1,143 @@
+<html>
+<head>
+  <title></title>
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+
+  <style type="text/css">
+    body {
+      padding-top: 20px
+    }
+    .inputs input, .inputs select {
+      margin-top: 5px
+    }
+    select {
+      width: 100%;
+      font-size: 14px;
+      border: thin solid grey;
+      height: 32px;
+    }
+    .send.btn {
+      width: 200px
+    }
+
+  </style>
+
+</head>
+<body ng-app="s3-demo">
+
+  <div class="container">
+    <nav class="navbar navbar-default" role="navigation">
+      <div class="navbar-header">
+        <div class="navbar-brand">AWS S3 Serverless Client</div>
+      </div>
+    </nav>
+
+    <div class="inputs">
+      
+      <input type="text" class="form-control"
+             placeholder="AWS Access key"
+             ng-model="access" ng-change="setKeys()">
+
+      <input type="text" class="form-control"
+             placeholder="AWS Secret key"
+             ng-model="secret" ng-change="setKeys()">
+
+      <select ng-options="s for s in endpoints"
+              ng-model="endpoint" ng-change="setURL()">
+      </select>
+
+      <input type="text" class="form-control"
+             placeholder="Bucket name"
+             ng-init="bucket='jpillora-aus'"
+             ng-model="bucket" ng-change="setURL()">
+
+      <select ng-options="s for s in methods"
+              ng-model="method">
+      </select>
+
+      <input type="text" class="form-control"
+             placeholder="Object key"
+             ng-init="key='restricted/secret.txt'"
+             ng-model="key" ng-change="setURL()">
+
+      <input type="text" class="form-control"
+             placeholder="Object value"
+             ng-show="method == 'putObject'"
+             ng-model="body">
+
+      <div style="text-align: center;">
+        <button type="button"
+               class="btn send btn-default navbar-btn"
+               ng-disabled="running"
+               ng-click="run()">Send</button>
+      </div>
+    </div>
+
+    <div class="output">
+      Request URL:<br>
+      <pre ng-bind="url || '...'"></pre>
+      Response Headers:<br>
+      <pre ng-bind="responseHeaders">...</pre>
+      Response Text:<br>
+      <pre ng-bind="responseText">...</pre>
+    </div>
+  </div>
+
+  <script type="text/javascript"
+          src="dist/aws-sdk-browser.js"></script>
+
+  <script type="text/javascript"
+          src="//ajax.googleapis.com/ajax/libs/angularjs/1.1.5/angular.js"></script>
+
+  <script type="text/javascript">
+    angular.module('s3-demo', []).run(function($rootScope, $timeout) {
+
+      scope = $rootScope;
+
+      scope.running = false;
+      scope.endpoints = S3.endpoints
+      scope.methods = [
+        "getObject",
+        "putObject"
+      ]
+
+      //defaults
+      scope.method = scope.methods[0]
+      scope.endpoint = scope.endpoints[1]
+
+      scope.setKeys = function() {
+        S3.set({
+          accessKeyId: scope.access,
+          secretAccessKey: scope.secret
+        });
+      };
+
+      scope.setURL = function() {
+        scope.url = scope.endpoint + "/" + scope.bucket + "/" + scope.key;
+      };
+
+      scope.run = function() {
+        args = [scope.url]
+        if(scope.method === "putObject") args.push(scope.body);
+        args.push(function(res) {
+          scope.responseHeaders = xhook.headers(res.responseHeaders);
+          scope.responseText = res.responseText;
+          scope.running = false;
+          scope.$apply();
+        });
+
+        if(!scope.method) return alert('Method missing');
+
+        scope.running = true;
+        S3[scope.method].apply(null, args);
+      };
+
+      $timeout(function() {
+        scope.setURL();
+      })
+
+    });
+  </script>
+</body>
+</html>

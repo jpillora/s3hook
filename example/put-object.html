@@ -14,8 +14,9 @@
       secretAccessKey: '...'
     });
 
-    S3.getObject('https://s3-ap-southeast-2.amazonaws.com/jpillora-aus/restricted/secret.txt', function(res) {
-      console.log(res)
+    S3.putObject('https://s3-ap-southeast-2.amazonaws.com/jpillora-aus/'+
+                  'another-secret.txt.txt', "42", function(res) {
+      console.log(res);
     });
 
   </script>
