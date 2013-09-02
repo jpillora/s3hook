@@ -4,7 +4,7 @@
 </head>
 <body>
 
-  <script src="../dist/aws-sdk-browser.js"></script>
+  <script src="../dist/s3.js"></script>
 
   <script type="text/javascript">
 
@@ -14,8 +14,13 @@
       secretAccessKey: '...'
     });
 
-    S3.getObject('https://s3-ap-southeast-2.amazonaws.com/jpillora-aus/restricted/secret.txt', function(res) {
-      console.log(res)
+    var endpoint = 'https://s3-ap-southeast-2.amazonaws.com';
+    var bucket = 'jpillora-aus';
+    var key = 'restricted/secret.txt';
+    var url = [endpoint,bucket,key].join('/');
+
+    S3.getObject(url, function(result) {
+      console.log(result)
     });
 
   </script>

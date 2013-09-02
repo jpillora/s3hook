@@ -1,6 +1,6 @@
 {
-  "name": "aws-sdk-browser",
-  "title": "Unofficial AWS SDK for the Browser",
+  "name": "s3",
+  "title": "s3.js",
   "version": "0.1.0",
   "license": "MIT",
   "homepage": "https://github.com/jpillora/aws-sdk-browser",

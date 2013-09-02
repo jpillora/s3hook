@@ -14,7 +14,6 @@ endpoints.push e for e of slaves
 #private config
 config = {}
 
-
 #signer
 hashing.hmac_hash = hashing.sha1
 hash = (key, str) ->
@@ -29,8 +28,9 @@ ajax = (opts, callback = ->) ->
   method = opts.method or 'GET'
   url = opts.url or ''
   path = url.replace(/https?\:\/\/[^\/]+/,'')
-  type = if method isnt 'GET' and /\.(\w+)$/.test(path) then MIME_TYPES[RegExp.$1] else ''
-  # type = if method is 'GET' then '' else 'application/x-www-form-urlencoded; charset=UTF-8'
+  type = 'text/plain; charset=UTF-8' if method isnt 'GET'
+  type = opts.type if opts.type
+
   date = new Date().toUTCString()
   body = opts.body
 
@@ -45,16 +45,16 @@ ajax = (opts, callback = ->) ->
       amz.push header.toLowerCase()+":"+val
     headers[header] = val
 
-  #set date for aws
+  #default headers
   setHeader 'Content-Type', type if type
   setHeader 'x-amz-date', date
 
-  #sign request
-  message = [method, "", type, "", amz.join("\n"), path].join("\n")
-
-  #handle headers
+  #user headers
   for header,value of opts.headers
     setHeader header, value
+
+  #sign request
+  message = [method, "", type, "", amz.join("\n"), path].join("\n")
 
   #finally, sign and set
   setHeader "Authorization", auth + hash(config[SECRET_KEY], message)
@@ -62,7 +62,6 @@ ajax = (opts, callback = ->) ->
   xhr.onreadystatechange = ->
     if xhr.readyState is 4
       callback {
-        url: url
         status: xhr.status
         requestHeaders: headers
         responseHeaders: xhook.headers xhr.getAllResponseHeaders()

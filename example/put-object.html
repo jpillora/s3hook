@@ -4,7 +4,7 @@
 </head>
 <body>
 
-  <script src="../dist/aws-sdk-browser.js"></script>
+  <script src="../dist/s3.js"></script>
 
   <script type="text/javascript">
 
@@ -14,9 +14,13 @@
       secretAccessKey: '...'
     });
 
-    S3.putObject('https://s3-ap-southeast-2.amazonaws.com/jpillora-aus/'+
-                  'another-secret.txt.txt', "42", function(res) {
-      console.log(res);
+    var endpoint = 'https://s3-ap-southeast-2.amazonaws.com';
+    var bucket = 'jpillora-aus';
+    var key = 'restricted/another-secret.txt';
+    var url = [endpoint,bucket,key].join('/');
+
+    S3.putObject(url, "42", function(result) {
+      console.log(result);
     });
 
   </script>

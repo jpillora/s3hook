@@ -29,7 +29,7 @@
   <div class="container">
     <nav class="navbar navbar-default" role="navigation">
       <div class="navbar-header">
-        <div class="navbar-brand">AWS S3 Serverless Client</div>
+        <div class="navbar-brand">A Serverless Client for AWS Simple Storage Service</div>
       </div>
     </nav>
 
@@ -129,8 +129,12 @@
 
         if(!scope.method) return alert('Method missing');
 
-        scope.running = true;
-        S3[scope.method].apply(null, args);
+        try {
+          S3[scope.method].apply(null, args);
+          scope.running = true;
+        } catch(e) {
+          alert(e);
+        }
       };
 
       $timeout(function() {
