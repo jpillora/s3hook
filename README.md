@@ -43,30 +43,30 @@ S3.getObject(url, function(data) {
 
 Set S3 configuration
 
-`object.accessKeyId` - AWS Access Key
-`object.secretAccessKey` - AWS Secret Key
+* v`object.accessKeyId` - AWS Access Key
+* `object.secretAccessKey` - AWS Secret Key
 
 ### `S3.getObject(url, callback(result))`
 
 Gets an object
 
-`url` - The object URI (includes endpoint, bucket and key)
-`result` - See below
+* `url` - The object URI (includes endpoint, bucket and key)
+* `result` - See below
 
 ### `S3.putObject(url, data, callback(result))`
 
-`url` - The object URI (includes endpoint, bucket and key)
-`data` - The object data
-`result` - See below
+* `url` - The object URI (includes endpoint, bucket and key)
+* `data` - The object data
+* `result` - See below
 
-### `result`
+#### `result`
 
 The response object
 
-`result.status` - Status code number
-`result.responseText` - Response body
-`result.responseHeaders` - Response headers
-`result.requestHeaders` - Request headers
+* `result.status` - Status code number
+* `result.responseText` - Response body
+* `result.responseHeaders` - Response headers
+* `result.requestHeaders` - Request headers
 
 ## References
 
