@@ -3,8 +3,8 @@ SECRET_KEY = 'secretAccessKey'
 
 #currently supported endpoints
 slaves =
-  "https://s3.amazonaws.com":"/jpillora-usa/proxy.html",
-  "https://s3-ap-southeast-2.amazonaws.com":"/jpillora-aus/proxy.html"
+  "https://s3.amazonaws.com":"/jpillora-usa/xdomain/proxy.html",
+  "https://s3-ap-southeast-2.amazonaws.com":"/jpillora-aus/xdomain/proxy.html"
 
 xdomain { slaves }
 
