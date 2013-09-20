@@ -1,6 +1,6 @@
-# S3.js
+# S3 Hook
 
-A Serverless Client for AWS Simple Storage Service
+
 
 ## *Disclaimer*
 
@@ -13,24 +13,12 @@ bucket and to a particular prefix.
 ## Example
 
 ``` js
-S3.set({
-  accessKeyId: '...',
-  secretAccessKey: '...'
-});
 
-var endpoint = 'https://s3-ap-southeast-2.amazonaws.com';
-var bucket = 'jpillora-aus';
-var key = 'restricted/secret.txt';
-var url = [endpoint,bucket,key].join('/');
-
-S3.getObject(url, function(data) {
-  console.log(data.responseText)
-});
 ```
 
 ## Live demo
 
-### http://jpillora.com/s3js/
+### http://jpillora.com/s3hook/
 
 ## Download
 
@@ -38,35 +26,6 @@ S3.getObject(url, function(data) {
 * Production [s3.min.js](http://jpillora.com/s3js/dist/s3.min.js) 16KB (4.7KB Gzip)
 
 ## API
-
-### `S3.set(object)`
-
-Set S3 configuration
-
-* v`object.accessKeyId` - AWS Access Key
-* `object.secretAccessKey` - AWS Secret Key
-
-### `S3.getObject(url, callback(result))`
-
-Gets an object
-
-* `url` - The object URI (includes endpoint, bucket and key)
-* `result` - See below
-
-### `S3.putObject(url, data, callback(result))`
-
-* `url` - The object URI (includes endpoint, bucket and key)
-* `data` - The object data
-* `result` - See below
-
-#### `result`
-
-The response object
-
-* `result.status` - Status code number
-* `result.responseText` - Response body
-* `result.responseHeaders` - Response headers
-* `result.requestHeaders` - Request headers
 
 ## References
 

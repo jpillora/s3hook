@@ -1,9 +1,10 @@
 {
-  "name": "s3",
-  "title": "s3.js",
-  "version": "0.1.0",
+  "name": "s3hook",
+  "title": "S3 Hook",
+  "description": "Transparent Client-side S3 Request Signing",
+  "version": "0.2.0",
   "license": "MIT",
-  "homepage": "https://github.com/jpillora/aws-sdk-browser",
+  "homepage": "https://github.com/jpillora/s3hook",
   "author": "Jaime Pillora <dev@jpillora.com>",
   "source": "~/.grunt-sources/jslib",
   "repo": "https://github.com/jpillora/grunt-source-jslib.git"

@@ -1,7 +1,7 @@
-// XDomain - v0.5.0 - https://github.com/jpillora/xdomain
+// XDomain - v0.5.5 - https://github.com/jpillora/xdomain
 // Jaime Pillora <dev@jpillora.com> - MIT Copyright 2013
 (function(window,document,undefined) {
-// XHook - v1.0.0 - https://github.com/jpillora/xhook
+// XHook - v1.0.2 - https://github.com/jpillora/xhook
 // Jaime Pillora <dev@jpillora.com> - MIT Copyright 2013
 (function(window,document,undefined) {
 var AFTER, BEFORE, EventEmitter, INVALID_PARAMS_ERROR, READY_STATE, convertHeaders, createXHRFacade, patchClass, pluginEvents, xhook, _base,
@@ -125,7 +125,7 @@ patchClass("ActiveXObject");
 patchClass("XMLHttpRequest");
 
 createXHRFacade = function(xhr) {
-  var checkEvent, currentState, event, extractProps, face, readyBody, readyHead, request, response, setReadyState, transiting, xhrEvents, _i, _len, _ref;
+  var checkEvent, copyBody, copyHead, currentState, event, extractProps, face, readyBody, readyHead, request, response, setReadyState, transiting, xhrEvents, _i, _len, _ref;
   if (pluginEvents.listeners(BEFORE).length === 0 && pluginEvents.listeners(AFTER).length === 0) {
     return xhr;
   }
@@ -145,6 +145,28 @@ createXHRFacade = function(xhr) {
     face.response = response.data || null;
     face.responseText = response.text || response.data || '';
     face.responseXML = response.xml || null;
+  };
+  copyHead = function() {
+    var key, val, _ref, _results;
+    response.status = xhr.status;
+    response.statusText = xhr.statusText;
+    _ref = convertHeaders(xhr.getAllResponseHeaders());
+    _results = [];
+    for (key in _ref) {
+      val = _ref[key];
+      if (!response.headers[key]) {
+        _results.push(response.headers[key] = val);
+      } else {
+        _results.push(void 0);
+      }
+    }
+    return _results;
+  };
+  copyBody = function() {
+    response.type = xhr.responseType;
+    response.text = xhr.responseText;
+    response.data = xhr.response || response.text;
+    return response.xml = xhr.responseXML;
   };
   currentState = 0;
   setReadyState = function(n) {
@@ -212,24 +234,13 @@ createXHRFacade = function(xhr) {
     }
   };
   xhr.onreadystatechange = function(event) {
-    var key, val, _ref;
-    if (xhr[READY_STATE] === 2) {
-      response.status = xhr.status;
-      response.statusText = xhr.statusText;
-      _ref = convertHeaders(xhr.getAllResponseHeaders());
-      for (key in _ref) {
-        val = _ref[key];
-        if (!response.headers[key]) {
-          response.headers[key] = val;
-        }
-      }
+    if (typeof xhr.status !== 'unknown' && xhr[READY_STATE] === 2) {
+      copyHead();
     }
     if (xhr[READY_STATE] === 4) {
       transiting = false;
-      response.type = xhr.responseType;
-      response.text = xhr.responseText;
-      response.data = xhr.response || response.text;
-      response.xml = xhr.responseXML;
+      copyHead();
+      copyBody();
       setReadyState(xhr[READY_STATE]);
     }
   };
@@ -246,7 +257,7 @@ createXHRFacade = function(xhr) {
     status: 0
   };
   face.addEventListener = function(event, fn) {
-    return xhrEvents.on(e, fn);
+    return xhrEvents.on(event, fn);
   };
   face.removeEventListener = xhrEvents.off;
   face.dispatchEvent = function() {};
@@ -266,7 +277,9 @@ createXHRFacade = function(xhr) {
       };
       transiting = true;
       xhr.open(request.method, request.url, request.async);
-      xhr.timeout = request.timeout;
+      if (request.timeout) {
+        xhr.timeout = request.timeout;
+      }
       _ref1 = request.headers;
       for (header in _ref1) {
         value = _ref1[header];
@@ -292,7 +305,6 @@ createXHRFacade = function(xhr) {
       if (hook.length === 1) {
         return done(hook(request));
       } else if (hook.length === 2) {
-        request.async = true;
         return hook(request, done);
       } else {
         throw INVALID_PARAMS_ERROR;
@@ -322,7 +334,7 @@ createXHRFacade = function(xhr) {
 window.xhook = xhook;
 }(window,document));
 'use strict';
-var COMPAT_VERSION, Frame, addMasters, addSlaves, currentOrigin, feature, getMessage, guid, m, masters, onMessage, p, parseUrl, s, script, setMessage, setupReceiver, setupSender, slaves, toRegExp, warn, _i, _j, _len, _len1, _ref, _ref1;
+var CHECK_INTERVAL, COMPAT_VERSION, Frame, addMasters, addSlaves, attr, currentOrigin, feature, getMessage, guid, m, masters, onMessage, p, parseUrl, prefix, s, script, setMessage, setupReceiver, setupSender, slaves, toRegExp, warn, xdomain, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
 
 currentOrigin = location.protocol + '//' + location.host;
 
@@ -405,7 +417,7 @@ addMasters = function(m) {
 setupReceiver = function() {
   onMessage(function(event) {
     var frame, k, master, masterRegex, message, origin, p, pathRegex, proxyXhr, regex, req, v, _ref1;
-    origin = event.origin;
+    origin = event.origin === "null" ? "*" : event.origin;
     pathRegex = null;
     for (master in masters) {
       regex = masters[master];
@@ -439,7 +451,7 @@ setupReceiver = function() {
       resp = {
         status: proxyXhr.status,
         statusText: proxyXhr.statusText,
-        type: "text",
+        type: "",
         text: proxyXhr.responseText,
         headers: xhook.headers(proxyXhr.getAllResponseHeaders())
       };
@@ -448,6 +460,9 @@ setupReceiver = function() {
         msg: resp
       }), origin);
     };
+    if (req.timeout) {
+      proxyXhr.timeout = req.timeout;
+    }
     _ref1 = req.headers;
     for (k in _ref1) {
       v = _ref1[k];
@@ -512,22 +527,23 @@ Frame = (function() {
     this.frame.setAttribute('style', 'display:none;');
     document.body.appendChild(this.frame);
     this.waits = 0;
+    this.waiters = [];
     this.ready = false;
   }
 
   Frame.prototype.post = function(msg) {
-    return this.frame.contentWindow.postMessage(msg, this.origin);
+    this.frame.contentWindow.postMessage(msg, this.origin);
   };
 
   Frame.prototype.listen = function(id, callback) {
     if (this.listeners[id]) {
       throw "already listening for: " + id;
     }
-    return this.listeners[id] = callback;
+    this.listeners[id] = callback;
   };
 
   Frame.prototype.unlisten = function(id) {
-    return delete this.listeners[id];
+    delete this.listeners[id];
   };
 
   Frame.prototype.recieve = function(event) {
@@ -547,12 +563,12 @@ Frame = (function() {
       return;
     }
     this.unlisten(message.id);
-    return cb(message.msg);
+    cb(message.msg);
   };
 
   Frame.prototype.send = function(msg, callback) {
     var _this = this;
-    return this.readyCheck(function() {
+    this.readyCheck(function() {
       var id;
       id = guid();
       _this.listen(id, function(data) {
@@ -566,23 +582,36 @@ Frame = (function() {
   };
 
   Frame.prototype.readyCheck = function(callback) {
-    var _this = this;
-    if (this.ready === true) {
+    var check,
+      _this = this;
+    if (this.ready) {
       return callback();
     }
-    if (this.waits++ >= 100) {
-      throw "Timeout connecting to iframe: " + this.origin;
+    this.waiters.push(callback);
+    if (this.waiters.length !== 1) {
+      return;
     }
-    return setTimeout(function() {
-      return _this.readyCheck(callback);
-    }, 100);
+    check = function() {
+      if (_this.ready) {
+        while (_this.waiters.length) {
+          _this.waiters.shift()();
+        }
+        return;
+      }
+      if (_this.waits++ >= xdomain.timeout / CHECK_INTERVAL) {
+        throw "Timeout connecting to iframe: " + _this.origin;
+      } else {
+        return setTimeout(check, CHECK_INTERVAL);
+      }
+    };
+    check();
   };
 
   return Frame;
 
 })();
 
-window.xdomain = function(o) {
+xdomain = function(o) {
   if (!o) {
     return;
   }
@@ -594,25 +623,40 @@ window.xdomain = function(o) {
   }
 };
 
+xdomain.parseUrl = parseUrl;
+
 xdomain.origin = currentOrigin;
+
+xdomain.timeout = 15e3;
+
+CHECK_INTERVAL = 100;
+
+window.xdomain = xdomain;
 
 _ref1 = document.getElementsByTagName("script");
 for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
   script = _ref1[_j];
   if (/xdomain/.test(script.src)) {
-    if (script.hasAttribute('slave')) {
-      p = parseUrl(script.getAttribute('slave'));
-      if (!p) {
-        return;
+    _ref2 = ['', 'data-'];
+    for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+      prefix = _ref2[_k];
+      attr = script.getAttribute(prefix + 'slave');
+      if (attr) {
+        p = parseUrl(attr);
+        if (!p) {
+          return;
+        }
+        s = {};
+        s[p.origin] = p.path;
+        addSlaves(s);
+        break;
       }
-      s = {};
-      s[p.origin] = p.path;
-      addSlaves(s);
-    }
-    if (script.hasAttribute('master')) {
-      m = {};
-      m[script.getAttribute('master')] = /./;
-      addMasters(m);
+      attr = script.getAttribute(prefix + 'master');
+      if (attr) {
+        m = {};
+        m[attr] = /./;
+        addMasters(m);
+      }
     }
   }
 }

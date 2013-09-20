@@ -1,6 +1,6 @@
 <html>
 <head>
-  <title></title>
+  <title>S3 Hook Demo</title>
   <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
   <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
 
@@ -8,8 +8,14 @@
     body {
       padding-top: 20px
     }
-    .inputs input, .inputs select {
+    .container {
+      padding-bottom: 60px;
+    }
+    .inputs input, .inputs select, .inputs textarea , .inputs .button-box{
       margin-top: 5px
+    }
+    textarea {
+      font-family: Courier;
     }
     select {
       width: 100%;
@@ -20,6 +26,11 @@
     .send.btn {
       width: 200px
     }
+    .button-box {
+      font-weight: normal !important;
+      font-style: italic
+    }
+
 
   </style>
 
@@ -43,6 +54,11 @@
              placeholder="AWS Secret key"
              ng-model="secret" ng-change="setKeys()">
 
+      <div class="button-box" ng-show="hasLocalStorage">
+        <input id="remember" type="checkbox" ng-model="remember" ng-change="setRemember()">
+        <label for="remember">Keep keys in Local Storage</label>
+      </div>
+
       <select ng-options="s for s in endpoints"
               ng-model="endpoint" ng-change="setURL()">
       </select>
@@ -61,15 +77,15 @@
              ng-init="key='restricted/secret.txt'"
              ng-model="key" ng-change="setURL()">
 
-      <input type="text" class="form-control"
+      <textarea type="text" class="form-control"
              placeholder="Object value"
-             ng-show="method == 'putObject'"
-             ng-model="body">
+             ng-show="method != 'GET'"
+             ng-model="body"></textarea>
 
       <div style="text-align: center;">
         <button type="button"
                class="btn send btn-default navbar-btn"
-               ng-disabled="running"
+               ng-disabled="running || !access || !secret"
                ng-click="run()">Send</button>
       </div>
     </div>
@@ -77,39 +93,54 @@
     <div class="output">
       Request URL:<br>
       <pre ng-bind="url || '...'"></pre>
+      <!-- 
+      Request Headers:<br>
+      <pre ng-bind="requestHeaders || '...'"></pre>
+      -->
+      Response Code:<br>
+      <pre ng-bind="responseCode || '...'"></pre>
       Response Headers:<br>
-      <pre ng-bind="responseHeaders">...</pre>
+      <pre ng-bind="responseHeaders || '...'"></pre>
       Response Text:<br>
-      <pre ng-bind="responseText">...</pre>
+      <pre ng-bind="responseText || '...'"></pre>
     </div>
   </div>
 
-  <script type="text/javascript" src="dist/0/s3.js"></script>
+  <script type="text/javascript" src="dist/0.2/s3hook.js"></script>
 
   <script type="text/javascript"
           src="//ajax.googleapis.com/ajax/libs/angularjs/1.1.5/angular.js"></script>
 
   <script type="text/javascript">
-    angular.module('s3-demo', []).run(function($rootScope, $timeout) {
+    angular.module('s3-demo', []).run(function($rootScope, $timeout, $http) {
 
       scope = $rootScope;
 
+      scope.hasLocalStorage = !!window.localStorage;
       scope.running = false;
-      scope.endpoints = S3.endpoints
+      scope.endpoints = s3hook.endpoints
       scope.methods = [
-        "getObject",
-        "putObject"
+        "GET",
+        "PUT"
       ]
 
       //defaults
       scope.method = scope.methods[0]
       scope.endpoint = scope.endpoints[1]
 
+      scope.setRemember = function() {
+        if(!scope.remember) {
+          localStorage.setItem('access', '');
+          localStorage.setItem('secret', '');
+        }
+      }
+
       scope.setKeys = function() {
-        S3.set({
-          accessKeyId: scope.access,
-          secretAccessKey: scope.secret
-        });
+        s3hook(scope.access, scope.secret);
+        if(scope.remember){
+          localStorage.setItem('access', scope.access);
+          localStorage.setItem('secret', scope.secret);
+        }
       };
 
       scope.setURL = function() {
@@ -117,26 +148,37 @@
       };
 
       scope.run = function() {
-        args = [scope.url]
-        if(scope.method === "putObject") args.push(scope.body);
-        args.push(function(res) {
-          scope.responseHeaders = xhook.headers(res.responseHeaders);
-          scope.responseText = res.responseText;
+
+        scope.running = true;
+
+        $http({ 
+          method: scope.method, 
+          url: scope.url
+        })
+          .success(gotResponse)
+          .error(gotResponse);
+
+        function gotResponse(data, status, headers, config) {
+          // called asynchronously if an error occurs
+          // or server returns response with an error status.
+          // scope.requestHeaders = xhook.headers(res.requestHeaders);
+          scope.responseCode = status;
+          scope.responseHeaders = xhook.headers(headers());
+          scope.responseText = data;
           scope.running = false;
-          scope.$apply();
-        });
-
-        if(!scope.method) return alert('Method missing');
-
-        try {
-          S3[scope.method].apply(null, args);
-          scope.running = true;
-        } catch(e) {
-          alert(e);
         }
       };
 
       $timeout(function() {
+
+        if(scope.hasLocalStorage) {
+          scope.access = localStorage.getItem('access');
+          scope.secret = localStorage.getItem('secret');
+          scope.remember = !!scope.access && !!scope.secret;
+          console.log(scope)
+          scope.setKeys();
+        }
+
         scope.setURL();
       })
 
