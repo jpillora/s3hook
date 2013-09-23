@@ -73,6 +73,10 @@ http://docs.aws.amazon.com/AmazonS3/latest/dev/MakingRequests.html
 
 http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md)
+
 ## Todo
 
 * Create a better S3 client than the AWS Console
