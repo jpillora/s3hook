@@ -96,6 +96,13 @@ add = (name, access, secret, path = /.*/) ->
 remove = (name) ->
   delete configs[name]
 
+proxy = (url) ->
+  p = xdomain.parseUrl url
+  return unless p and p.path
+  slaves = {}
+  slaves[p.origin] = p.path
+  xdomain slaves
+
 s3hook.xml2json = true
 s3hook.set = set
 s3hook.clear = clear
@@ -104,6 +111,7 @@ s3hook.remove = remove
 s3hook.encoding = encoding
 s3hook.hashing = hashing
 s3hook.endpoints = endpoints
+s3hook.proxy = proxy
 
 #public methods
 window.s3hook = s3hook

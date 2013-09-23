@@ -1237,7 +1237,7 @@ function xml2json(xml) {
 
   return text ? obj['#text'] : obj;
 }
-var ACCESS_KEY, SECRET_KEY, add, clear, configs, e, endpoints, init, remove, s3hook, set, sign, slaves;
+var ACCESS_KEY, SECRET_KEY, add, clear, configs, e, endpoints, init, proxy, remove, s3hook, set, sign, slaves;
 
 ACCESS_KEY = 'accessKeyId';
 
@@ -1352,6 +1352,17 @@ remove = function(name) {
   return delete configs[name];
 };
 
+proxy = function(url) {
+  var p;
+  p = xdomain.parseUrl(url);
+  if (!(p && p.path)) {
+    return;
+  }
+  slaves = {};
+  slaves[p.origin] = p.path;
+  return xdomain(slaves);
+};
+
 s3hook.xml2json = true;
 
 s3hook.set = set;
@@ -1367,6 +1378,8 @@ s3hook.encoding = encoding;
 s3hook.hashing = hashing;
 
 s3hook.endpoints = endpoints;
+
+s3hook.proxy = proxy;
 
 window.s3hook = s3hook;
 }(window,document));
