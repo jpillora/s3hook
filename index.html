@@ -57,22 +57,18 @@
         <label for="remember">Keep keys in Local Storage</label>
       </div>
 
+      <select ng-options="s for s in methods" ng-model="method">
+      </select>
+
       <select ng-options="s for s in endpoints"
               ng-model="endpoint" ng-change="setURL()">
       </select>
 
       <input type="text" class="form-control"
-             placeholder="Bucket name"
-             ng-init="bucket='jpillora-aus'"
-             ng-model="bucket" ng-change="setURL()">
-
-      <select ng-options="s for s in methods" ng-model="method">
-      </select>
-
-      <input type="text" class="form-control"
              placeholder="Request Path"
-             ng-init="key='restricted/secret.txt'"
-             ng-model="key" ng-change="setURL()">
+             ng-init="path='my-awesome-bucket/my-secret-file.txt'"
+             ng-keydown="$event.keyCode == 13 && run()"
+             ng-model="path" ng-change="setURL()">
 
       <textarea type="text" class="form-control"
              placeholder="Request Body"
@@ -82,11 +78,13 @@
       <div class="row" ng-repeat="header in headers">
         <div class="col-md-6">
           <input type="text" class="form-control" placeholder="Header name"
-                 ng-model="header.name", ng-change="updateHeaders()"></input>
+                 ng-model="header.name", ng-change="updateHeaders()"
+                 ng-keydown="$event.keyCode == 13 && run()"></input>
         </div>
         <div class="col-md-6">
           <input type="text" class="form-control" placeholder="Header value"
-                 ng-model="header.value", ng-change="updateHeaders()"></input>
+                 ng-model="header.value", ng-change="updateHeaders()"
+                 ng-keydown="$event.keyCode == 13 && run()"></input>
         </div>
       </div>
 
@@ -115,13 +113,16 @@
       <pre ng-bind="responseHeaders || '...'"></pre>
       Response Text:<br>
       <pre ng-bind="responseText"></pre>
+
+      <span class="muted">Note: <code>*/xml</code> is silently converted to <code>application/json</code> unless <code>s3hook.xml2json</code> is set to <code>false</code>.</span>
+
     </div>
   </div>
 
   <script type="text/javascript" src="dist/0.2/s3hook.js"></script>
 
   <script type="text/javascript"
-          src="//ajax.googleapis.com/ajax/libs/angularjs/1.1.5/angular.js"></script>
+          src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.0-rc.2/angular.js"></script>
 
   <script type="text/javascript">
     angular.module('s3-demo', []).run(function($rootScope, $timeout, $http) {
@@ -140,7 +141,7 @@
 
       //defaults
       scope.method = scope.methods[0]
-      scope.endpoint = scope.endpoints[1]
+      scope.endpoint = scope.endpoints[0]
 
       scope.updateHeaders = function() {
         var spare = -1;
@@ -174,7 +175,7 @@
       };
 
       scope.setURL = function() {
-        scope.url = scope.endpoint + "/" + scope.bucket + "/" + scope.key;
+        scope.url = scope.endpoint + "/" + scope.path;
       };
 
       scope.run = function() {

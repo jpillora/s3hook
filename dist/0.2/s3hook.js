@@ -1,4 +1,4 @@
-// S3 Hook - v0.2.0 - https://github.com/jpillora/s3hook
+// S3 Hook - v0.2.1 - https://github.com/jpillora/s3hook
 // Jaime Pillora <dev@jpillora.com> - MIT Copyright 2013
 (function(window,document,undefined) {
 /**
@@ -857,7 +857,9 @@ var CHECK_INTERVAL, COMPAT_VERSION, Frame, addMasters, addSlaves, attr, currentO
 currentOrigin = location.protocol + '//' + location.host;
 
 warn = function(str) {
+  var console;
   str = "xdomain (" + currentOrigin + "): " + str;
+  console = window.console = window.console || {};
   if (console['warn']) {
     return console.warn(str);
   } else {
