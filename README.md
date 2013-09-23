@@ -2,7 +2,7 @@
 
 Transparent (via [XHook](https://github.com/jpillora/xhook)), Cross-domain (via [XDomain](https://github.com/jpillora/xdomain)), Client-side S3 Request Signing
 
-All requests sent to `s3.amazonaws.com` are modified to include the correct `Authorization` header for the given credentials. `s3-ap-southeast-2.amazonaws.com` is also supported. To use other S3 endpoints or custom domains, see API for usage of the [proxy]() function.
+All requests sent to `s3.amazonaws.com` are modified to include the correct `Authorization` header for the given credentials. `s3-ap-southeast-2.amazonaws.com` is also supported. To use other S3 endpoints or custom domains, see API for usage of the [proxy](#s3hookproxyurl) function.
 
 ### *Disclaimer*
 
