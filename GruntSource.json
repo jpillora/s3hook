@@ -7,5 +7,10 @@
   "homepage": "https://github.com/jpillora/s3hook",
   "author": "Jaime Pillora <dev@jpillora.com>",
   "source": "~/.grunt-sources/jslib",
-  "repo": "https://github.com/jpillora/grunt-source-jslib.git"
+  "repo": "https://github.com/jpillora/grunt-source-jslib.git",
+  "config": {
+    "webget": {
+      "http://jpillora.com/xdomain/dist/0.5/xdomain.js": "vendor/xdomain.js"
+    }
+  }
 }
