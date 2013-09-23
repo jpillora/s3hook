@@ -7,11 +7,11 @@ All requests sent to `s3.amazonaws.com` are modified to include the correct `Aut
 ### *Disclaimer*
 
 As this library self signs its own requests, it requires the access key
-**and the secret key**. For this reason, it should only be used for internal
-applications where the keys are only provided to trusted users, or in cases
-where a key is provided by the client and never sent to the server. In addition,
-the key set should **only** have access to a particular
-bucket and to a particular prefix.
+**and the secret key**. For this reason, it should **only** be used for internal
+applications where the keys are only provided to trusted users, **or** in cases
+where a key pair is provided by the user and never sent to the server. For additional
+security, a policy for the given key pair should be created to restrict access to
+a particular bucket *and* to a particular prefix.
 
 ## Example
 
