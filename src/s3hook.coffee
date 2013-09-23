@@ -23,14 +23,12 @@ sign = (key, str) ->
 
 #setup xhr hook
 init = ->
-  console.log 'init!'
-  init = ->
+  init = -> #noop
   xhook.before (request) ->
 
     #parse url
     url = xdomain.parseUrl request.url
     unless url and url.path and slaves[url.origin]
-      console.log 's3hook skipping: ' + request.url
       return
 
     config = null
@@ -40,7 +38,6 @@ init = ->
         break
 
     unless config
-      console.log 's3hook blocking path: ' + request.path
       return
 
     #content type headers
@@ -60,32 +57,55 @@ init = ->
     message = [request.method, "", type, "", amz.join("\n"), url.path].join("\n")
 
     #finally, sign and set
-    request.headers["Authorization"] =  "AWS "+ config.access + ":" + sign(config.secret, message)
-    console.log 'signed!'
+    request.headers["Authorization"] =  "AWS #{config.access}:#{sign(config.secret, message)}" 
     return
-
   #first hook
   , 0
 
-set = (access, secret) ->
-  add 'DEFAULT', access, secret
+  #convert response xml to json
+  xhook.after (request, response) ->
 
+    return unless s3hook.xml2json
+
+    typeName = null
+    for h of response.headers
+      if /^content-type$/i.test h
+        typeName = h
+
+    return unless typeName
+
+    type = response.headers[typeName]
+    if /\/xml$/.test type
+      try
+        xml = str2xml response.text
+        obj = xml2json xml
+        json = JSON.stringify obj, null, 2
+        response.headers[typeName] = 'application/json'
+        response.text = json
+    return
+
+#public api
+s3hook = set = (access, secret) ->
+  add 'DEFAULT', access, secret
 clear = ->
   add 'DEFAULT', access, secret
-
 add = (name, access, secret, path = /.*/) ->
   configs[name] = {access, secret, path}
   init()
   return
-
 remove = (name) ->
   delete configs[name]
 
-set.encoding = encoding
-set.hashing = hashing
-set.endpoints = endpoints
+s3hook.xml2json = true
+s3hook.set = set
+s3hook.clear = clear
+s3hook.add = add
+s3hook.remove = remove
+s3hook.encoding = encoding
+s3hook.hashing = hashing
+s3hook.endpoints = endpoints
 
 #public methods
-window.s3hook = set
+window.s3hook = s3hook
 
   

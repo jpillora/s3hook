@@ -1179,7 +1179,63 @@ for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
   }
 }
 }(window,document));
-var ACCESS_KEY, SECRET_KEY, add, clear, configs, e, endpoints, init, remove, set, sign, slaves;
+str2xml.parser = window.DOMParser && new DOMParser();
+
+function str2xml(str) {
+  if (str2xml.parser)
+    return str2xml.parser.parseFromString(str, "text/xml");
+
+  var xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+  xmlDoc.async = false;
+  xmlDoc.loadXML(str);
+  return xmlDoc;
+}
+
+/**
+ * Convert XML to JSON Object
+ * @param {Object} XML DOM Document
+ */
+
+function xml2json(xml) {
+  var obj = {};
+
+  if (xml.nodeType == 1) { // element
+    // do attributes
+    if (xml.attributes.length > 0) {
+      obj['@attributes'] = {};
+      for (var j = 0; j < xml.attributes.length; j++) {
+        obj['@attributes'][xml.attributes[j].nodeName] = xml.attributes[j].nodeValue;
+      }
+    }
+
+  } else if (xml.nodeType == 3) { // text
+    obj = xml.nodeValue;
+  }
+
+  // do children
+  if (xml.hasChildNodes()) {
+    for (var i = 0; i < xml.childNodes.length; i++) {
+      if (typeof (obj[xml.childNodes[i].nodeName]) == 'undefined') {
+        obj[xml.childNodes[i].nodeName] = xml2json(xml.childNodes[i]);
+      } else {
+        if (typeof (obj[xml.childNodes[i].nodeName].length) == 'undefined') {
+          var old = obj[xml.childNodes[i].nodeName];
+          obj[xml.childNodes[i].nodeName] = [];
+          obj[xml.childNodes[i].nodeName].push(old);
+        }
+        obj[xml.childNodes[i].nodeName].push(xml2json(xml.childNodes[i]));
+      }
+    }
+  }
+
+  var text = true
+  for (var k in obj)
+    if(k !== '#text')
+      text = false;
+
+  return text ? obj['#text'] : obj;
+}
+var ACCESS_KEY, SECRET_KEY, add, clear, configs, e, endpoints, init, remove, s3hook, set, sign, slaves;
 
 ACCESS_KEY = 'accessKeyId';
 
@@ -1209,13 +1265,11 @@ sign = function(key, str) {
 };
 
 init = function() {
-  console.log('init!');
   init = function() {};
-  return xhook.before(function(request) {
+  xhook.before(function(request) {
     var amz, c, config, header, message, name, type, url, value, _ref;
     url = xdomain.parseUrl(request.url);
     if (!(url && url.path && slaves[url.origin])) {
-      console.log('s3hook skipping: ' + request.url);
       return;
     }
     config = null;
@@ -1227,7 +1281,6 @@ init = function() {
       }
     }
     if (!config) {
-      console.log('s3hook blocking path: ' + request.path);
       return;
     }
     if (request.method !== 'GET') {
@@ -1244,12 +1297,36 @@ init = function() {
       }
     }
     message = [request.method, "", type, "", amz.join("\n"), url.path].join("\n");
-    request.headers["Authorization"] = "AWS " + config.access + ":" + sign(config.secret, message);
-    console.log('signed!');
+    request.headers["Authorization"] = "AWS " + config.access + ":" + (sign(config.secret, message));
   }, 0);
+  return xhook.after(function(request, response) {
+    var h, json, obj, type, typeName, xml;
+    if (!s3hook.xml2json) {
+      return;
+    }
+    typeName = null;
+    for (h in response.headers) {
+      if (/^content-type$/i.test(h)) {
+        typeName = h;
+      }
+    }
+    if (!typeName) {
+      return;
+    }
+    type = response.headers[typeName];
+    if (/\/xml$/.test(type)) {
+      try {
+        xml = str2xml(response.text);
+        obj = xml2json(xml);
+        json = JSON.stringify(obj, null, 2);
+        response.headers[typeName] = 'application/json';
+        response.text = json;
+      } catch (_error) {}
+    }
+  });
 };
 
-set = function(access, secret) {
+s3hook = set = function(access, secret) {
   return add('DEFAULT', access, secret);
 };
 
@@ -1273,11 +1350,21 @@ remove = function(name) {
   return delete configs[name];
 };
 
-set.encoding = encoding;
+s3hook.xml2json = true;
 
-set.hashing = hashing;
+s3hook.set = set;
 
-set.endpoints = endpoints;
+s3hook.clear = clear;
 
-window.s3hook = set;
+s3hook.add = add;
+
+s3hook.remove = remove;
+
+s3hook.encoding = encoding;
+
+s3hook.hashing = hashing;
+
+s3hook.endpoints = endpoints;
+
+window.s3hook = s3hook;
 }(window,document));

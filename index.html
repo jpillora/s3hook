@@ -28,12 +28,10 @@
     }
     .button-box {
       font-weight: normal !important;
-      font-style: italic
+      font-style: italic;
+      padding-left: 20px;
     }
-
-
   </style>
-
 </head>
 <body ng-app="s3-demo">
 
@@ -68,25 +66,39 @@
              ng-init="bucket='jpillora-aus'"
              ng-model="bucket" ng-change="setURL()">
 
-      <select ng-options="s for s in methods"
-              ng-model="method">
+      <select ng-options="s for s in methods" ng-model="method">
       </select>
 
       <input type="text" class="form-control"
-             placeholder="Object key"
+             placeholder="Request Path"
              ng-init="key='restricted/secret.txt'"
              ng-model="key" ng-change="setURL()">
 
       <textarea type="text" class="form-control"
-             placeholder="Object value"
-             ng-show="method != 'GET'"
+             placeholder="Request Body"
+             ng-show="method != 'GET' && method != 'DELETE'"
              ng-model="body"></textarea>
+
+      <div class="row" ng-repeat="header in headers">
+        <div class="col-md-6">
+          <input type="text" class="form-control" placeholder="Header name"
+                 ng-model="header.name", ng-change="updateHeaders()"></input>
+        </div>
+        <div class="col-md-6">
+          <input type="text" class="form-control" placeholder="Header value"
+                 ng-model="header.value", ng-change="updateHeaders()"></input>
+        </div>
+      </div>
 
       <div style="text-align: center;">
         <button type="button"
                class="btn send btn-default navbar-btn"
                ng-disabled="running || !access || !secret"
                ng-click="run()">Send</button>
+        <a href="http://docs.aws.amazon.com/AmazonS3/latest/API/APIRest.html"
+           target="_blank">
+          S3 REST API Docs
+        </a>
       </div>
     </div>
 
@@ -102,7 +114,7 @@
       Response Headers:<br>
       <pre ng-bind="responseHeaders || '...'"></pre>
       Response Text:<br>
-      <pre ng-bind="responseText || '...'"></pre>
+      <pre ng-bind="responseText"></pre>
     </div>
   </div>
 
@@ -114,25 +126,43 @@
   <script type="text/javascript">
     angular.module('s3-demo', []).run(function($rootScope, $timeout, $http) {
 
-      scope = $rootScope;
-
+      scope = window.root = $rootScope;
       scope.hasLocalStorage = !!window.localStorage;
       scope.running = false;
       scope.endpoints = s3hook.endpoints
+      scope.headers = [{name: 'x-amz-acl', value: 'public-read'}, {}]
       scope.methods = [
         "GET",
-        "PUT"
+        "PUT",
+        "POST",
+        "DELETE"
       ]
 
       //defaults
       scope.method = scope.methods[0]
       scope.endpoint = scope.endpoints[1]
 
-      scope.setRemember = function() {
-        if(!scope.remember) {
-          localStorage.setItem('access', '');
-          localStorage.setItem('secret', '');
+      scope.updateHeaders = function() {
+        var spare = -1;
+        var full = true;
+        for(var i in scope.headers){
+          var h = scope.headers[i];
+          if(!h.name || !h.value) {
+            if(!full)
+              spare = +i;
+            full = false;
+          }
         }
+        if(full)
+          scope.headers.push({});
+        else if(!full && spare >= 1)
+          scope.headers.splice(spare, 1);
+      }
+
+      scope.setRemember = function() {
+        var r = scope.remember;
+        localStorage.setItem('access', r ? scope.access : '');
+        localStorage.setItem('secret', r ? scope.secret : '');
       }
 
       scope.setKeys = function() {
@@ -151,37 +181,38 @@
 
         scope.running = true;
 
+        headers = {}
+        for(var i in scope.headers) {
+          var h = scope.headers[i], n = h.name, v = h.value;
+          if(n && v) headers[n] = v;
+        }
+
         $http({ 
           method: scope.method, 
-          url: scope.url
-        })
-          .success(gotResponse)
+          url: scope.url,
+          data: scope.body,
+          headers: headers
+        }).success(gotResponse)
           .error(gotResponse);
 
         function gotResponse(data, status, headers, config) {
-          // called asynchronously if an error occurs
-          // or server returns response with an error status.
-          // scope.requestHeaders = xhook.headers(res.requestHeaders);
+          headers = headers();
           scope.responseCode = status;
-          scope.responseHeaders = xhook.headers(headers());
-          scope.responseText = data;
+          scope.responseHeaders = xhook.headers(headers);
+          scope.responseText = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
           scope.running = false;
         }
       };
 
       $timeout(function() {
-
         if(scope.hasLocalStorage) {
           scope.access = localStorage.getItem('access');
           scope.secret = localStorage.getItem('secret');
           scope.remember = !!scope.access && !!scope.secret;
-          console.log(scope)
           scope.setKeys();
         }
-
         scope.setURL();
-      })
-
+      });
     });
   </script>
 </body>

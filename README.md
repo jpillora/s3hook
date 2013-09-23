@@ -1,37 +1,71 @@
 # S3 Hook
 
-
+Transparent (via [XHook](https://github.com/jpillora/xhook)), Cross-domain (via [XDomain](https://github.com/jpillora/xdomain)), Client-side S3 Request Signing
 
 ## *Disclaimer*
 
 As this library self signs its own requests, it requires the access key
 **and the secret key**. For this reason, it should only be used for internal
-applications where the keys are only provided to trusted users. In addition,
+applications where the keys are only provided to trusted users, or in cases
+where a key is provided by the client and never sent to the server. In addition,
 the key set should **only** have access to a particular
 bucket and to a particular prefix.
 
 ## Example
 
 ``` js
+//enable hook
+s3hook("AKIAIOSFODNN7EXAMPLE","k3nL7gH3+PadhTEVn5EXAMPLE");
+
+//choose your favourite XHR library...
+//then just use the AWS REST API...
+
+//get bucket object list
+$.get('https://s3.amazonaws.com/jpillora-usa/')
+
+//put an object
+$.ajax({type:'PUT', url:'https://s3.amazonaws.com/jpillora-usa/foo.txt', data:'hello world!' });
 
 ```
 
-## Live demo
+*Tip: Set the `x-amz-acl: public-read` header to make an object public*
+
+## Demo
 
 ### http://jpillora.com/s3hook/
 
 ## Download
 
-* Development [s3.js](http://jpillora.com/s3js/dist/s3.js) 36KB
-* Production [s3.min.js](http://jpillora.com/s3js/dist/s3.min.js) 16KB (4.7KB Gzip)
+* Development [s3hook.js](http://jpillora.com/s3hook/dist/0.2/s3hook.js) 36KB
+* Production [s3hook.min.js](http://jpillora.com/s3hook/dist/s3.s3hook.js) 16KB (5KB Gzip)
 
 ## API
 
+### `s3hook`.`set(access, secret)`
+
+Enable S3 Hook with the provided credentials
+
+### `s3hook`.`clear()`
+
+Disable S3 Hook and clear credentials
+
+### `s3hook`.`xml2json`
+
+Default `true`
+
+Convert all XML responses (`*/xml`) to JSON (`application/json`)
+
 ## References
+
+http://docs.aws.amazon.com/AmazonS3/latest/API/APIRest.html
 
 http://docs.aws.amazon.com/AmazonS3/latest/dev/MakingRequests.html
 
 http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
+
+## Todo
+
+* Create a better S3 client than the AWS Console
 
 #### MIT License
 
