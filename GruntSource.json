@@ -2,7 +2,7 @@
   "name": "s3hook",
   "title": "S3 Hook",
   "description": "Transparent Client-side S3 Request Signing",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "license": "MIT",
   "homepage": "https://github.com/jpillora/s3hook",
   "author": "Jaime Pillora <dev@jpillora.com>",

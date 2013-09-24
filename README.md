@@ -13,6 +13,11 @@ where a key pair is provided by the user and never sent to the server. For addit
 security, a policy for the given key pair should be created to restrict access to
 a particular bucket *and* to a particular prefix.
 
+## Features
+
+* Includes [XHook](http://jpillora.com/xhook)
+* Includes [XDomain](http://jpillora.com/xdomain)
+
 ## Example
 
 ``` js
@@ -64,6 +69,20 @@ S3 Hook is initialised with:
 
 * `https://s3.amazonaws.com/jpillora-usa/xdomain/proxy.html`
 * `https://s3-ap-southeast-2.amazonaws.com/jpillora-aus/xdomain/proxy.html`
+
+So, to add your own, create a `https://MY-BUCKET.s3.amazonaws.com/MY/PATH/proxy.html`:
+
+``` html
+<!DOCTYPE HTML>
+<script src="http://s3.amazonaws.com/jpillora-usa/xdomain/0.5.min.js" master="*"></script>
+```
+
+Then add it:
+``` js
+s3hook.proxy("https://MY-BUCKET.s3.amazonaws.com/MY/PATH/proxy.html")
+```
+
+Now, cross-domain requests to `https://MY-BUCKET.s3.amazonaws.com` will work
 
 ## References
 

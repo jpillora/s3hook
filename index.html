@@ -133,7 +133,7 @@
       scope = window.root = $rootScope;
       scope.hasLocalStorage = !!window.localStorage;
       scope.running = false;
-      scope.endpoints = s3hook.endpoints
+      scope.endpoints = s3hook.endpoints()
       scope.headers = [{}] //{name: 'x-amz-acl', value: 'public-read'}, 
       scope.methods = [
         "GET",

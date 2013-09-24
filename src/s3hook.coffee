@@ -9,10 +9,6 @@ slaves =
 #setup xdomain AFTER s3hook
 xdomain { slaves }
 
-#available endpoints
-endpoints = []  
-endpoints.push e for e of slaves
-
 #private configs
 configs = []
 
@@ -40,9 +36,21 @@ init = ->
     unless config
       return
 
+    #calculated path
+    path = ''
+    if /https?:\/\/(([^\.]+)\.)s3[\w-]*\.amazonaws.com/.test url.origin
+      path += '/' + RegExp.$2
+    path += url.path
+
     #content type headers
-    request.headers['Content-Type'] = 'text/plain; charset=UTF-8' if request.method isnt 'GET'
-    type = request.headers['Content-Type']
+    typeName = hasContentType request.headers
+    if typeName 
+      type = request.headers[typeName]
+    else if request.body
+      type = request.headers['Content-Type'] = 'text/plain; charset=UTF-8'
+    else
+      type = ''
+    type = type.replace /utf-/, 'UTF-'
 
     #require date header
     request.headers['x-amz-date'] = new Date().toUTCString()
@@ -54,7 +62,9 @@ init = ->
         amz.push header.toLowerCase()+":"+value
 
     #sign request
-    message = [request.method, "", type, "", amz.join("\n"), url.path].join("\n")
+    message = [request.method, "", type, "", amz.join("\n"), path].join("\n")
+
+    # console.log "SIGNING\n===\n#{message}\n===\n"
 
     #finally, sign and set
     request.headers["Authorization"] =  "AWS #{config.access}:#{sign(config.secret, message)}" 
@@ -67,11 +77,7 @@ init = ->
 
     return unless s3hook.xml2json
 
-    typeName = null
-    for h of response.headers
-      if /^content-type$/i.test h
-        typeName = h
-
+    typeName = hasContentType response.headers
     return unless typeName
 
     type = response.headers[typeName]
@@ -83,6 +89,14 @@ init = ->
         response.headers[typeName] = 'application/json'
         response.text = json
     return
+
+#private helpers
+
+hasContentType = (headers) ->
+  for h of headers
+    if /^content-type$/i.test h
+      return h
+  return
 
 #public api
 s3hook = set = (access, secret) ->
@@ -99,9 +113,8 @@ remove = (name) ->
 proxy = (url) ->
   p = xdomain.parseUrl url
   return unless p and p.path
-  slaves = {}
   slaves[p.origin] = p.path
-  xdomain slaves
+  xdomain {slaves}
 
 s3hook.xml2json = true
 s3hook.set = set
@@ -110,8 +123,11 @@ s3hook.add = add
 s3hook.remove = remove
 s3hook.encoding = encoding
 s3hook.hashing = hashing
-s3hook.endpoints = endpoints
 s3hook.proxy = proxy
+s3hook.endpoints = ->
+  e = []
+  e.push(s) for s of slaves
+  e
 
 #public methods
 window.s3hook = s3hook

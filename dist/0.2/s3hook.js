@@ -1,4 +1,4 @@
-// S3 Hook - v0.2.1 - https://github.com/jpillora/s3hook
+// S3 Hook - v0.2.2 - https://github.com/jpillora/s3hook
 // Jaime Pillora <dev@jpillora.com> - MIT Copyright 2013
 (function(window,document,undefined) {
 /**
@@ -516,10 +516,10 @@
  })();
 
 
-// XDomain - v0.5.5 - https://github.com/jpillora/xdomain
+// XDomain - v0.5.6 - https://github.com/jpillora/xdomain
 // Jaime Pillora <dev@jpillora.com> - MIT Copyright 2013
 (function(window,document,undefined) {
-// XHook - v1.0.2 - https://github.com/jpillora/xhook
+// XHook - v1.0.3 - https://github.com/jpillora/xhook
 // Jaime Pillora <dev@jpillora.com> - MIT Copyright 2013
 (function(window,document,undefined) {
 var AFTER, BEFORE, EventEmitter, INVALID_PARAMS_ERROR, READY_STATE, convertHeaders, createXHRFacade, patchClass, pluginEvents, xhook, _base,
@@ -643,7 +643,7 @@ patchClass("ActiveXObject");
 patchClass("XMLHttpRequest");
 
 createXHRFacade = function(xhr) {
-  var checkEvent, copyBody, copyHead, currentState, event, extractProps, face, readyBody, readyHead, request, response, setReadyState, transiting, xhrEvents, _i, _len, _ref;
+  var checkEvent, copyBody, copyHead, currentState, event, extractProps, face, faceEvents, readyBody, readyHead, request, response, setReadyState, transiting, _i, _len, _ref;
   if (pluginEvents.listeners(BEFORE).length === 0 && pluginEvents.listeners(AFTER).length === 0) {
     return xhr;
   }
@@ -652,7 +652,7 @@ createXHRFacade = function(xhr) {
     headers: {}
   };
   response = null;
-  xhrEvents = EventEmitter();
+  faceEvents = EventEmitter();
   readyHead = function() {
     face.status = response.status;
     face.statusText = response.statusText;
@@ -699,9 +699,9 @@ createXHRFacade = function(xhr) {
         if (currentState === 4) {
           readyBody();
         }
-        xhrEvents.fire("readystatechange");
+        faceEvents.fire("readystatechange");
         if (currentState === 4) {
-          xhrEvents.fire("load");
+          faceEvents.fire("load");
         }
       }
     };
@@ -747,26 +747,29 @@ createXHRFacade = function(xhr) {
     for (key in face) {
       fn = face[key];
       if (typeof fn === 'function' && /^on(\w+)/.test(key)) {
-        xhrEvents.on(RegExp.$1, fn);
+        faceEvents.on(RegExp.$1, fn);
       }
     }
   };
   xhr.onreadystatechange = function(event) {
-    if (typeof xhr.status !== 'unknown' && xhr[READY_STATE] === 2) {
-      copyHead();
-    }
+    try {
+      if (xhr[READY_STATE] === 2) {
+        copyHead();
+        setReadyState(2);
+      }
+    } catch (_error) {}
     if (xhr[READY_STATE] === 4) {
       transiting = false;
       copyHead();
       copyBody();
-      setReadyState(xhr[READY_STATE]);
+      setReadyState(4);
     }
   };
   _ref = ['abort', 'progress'];
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
     event = _ref[_i];
     xhr["on" + event] = function(obj) {
-      return xhrEvents.fire(event, checkEvent(obj));
+      return faceEvents.fire(event, checkEvent(obj));
     };
   }
   face = {
@@ -775,9 +778,9 @@ createXHRFacade = function(xhr) {
     status: 0
   };
   face.addEventListener = function(event, fn) {
-    return xhrEvents.on(event, fn);
+    return faceEvents.on(event, fn);
   };
-  face.removeEventListener = xhrEvents.off;
+  face.removeEventListener = faceEvents.off;
   face.dispatchEvent = function() {};
   face.open = function(method, url, async) {
     request.method = method;
@@ -834,7 +837,7 @@ createXHRFacade = function(xhr) {
     if (transiting) {
       xhr.abort();
     }
-    xhrEvents.fire('abort', arguments);
+    faceEvents.fire('abort', arguments);
   };
   face.setRequestHeader = function(header, value) {
     request.headers[header] = value;
@@ -1237,7 +1240,7 @@ function xml2json(xml) {
 
   return text ? obj['#text'] : obj;
 }
-var ACCESS_KEY, SECRET_KEY, add, clear, configs, e, endpoints, init, proxy, remove, s3hook, set, sign, slaves;
+var ACCESS_KEY, SECRET_KEY, add, clear, configs, hasContentType, init, proxy, remove, s3hook, set, sign, slaves;
 
 ACCESS_KEY = 'accessKeyId';
 
@@ -1252,12 +1255,6 @@ xdomain({
   slaves: slaves
 });
 
-endpoints = [];
-
-for (e in slaves) {
-  endpoints.push(e);
-}
-
 configs = [];
 
 hashing.hmac_hash = hashing.sha1;
@@ -1269,7 +1266,7 @@ sign = function(key, str) {
 init = function() {
   init = function() {};
   xhook.before(function(request) {
-    var amz, c, config, header, message, name, type, url, value, _ref;
+    var amz, c, config, header, message, name, path, type, typeName, url, value, _ref;
     url = xdomain.parseUrl(request.url);
     if (!(url && url.path && slaves[url.origin])) {
       return;
@@ -1285,10 +1282,20 @@ init = function() {
     if (!config) {
       return;
     }
-    if (request.method !== 'GET') {
-      request.headers['Content-Type'] = 'text/plain; charset=UTF-8';
+    path = '';
+    if (/https?:\/\/(([^\.]+)\.)s3[\w-]*\.amazonaws.com/.test(url.origin)) {
+      path += '/' + RegExp.$2;
     }
-    type = request.headers['Content-Type'];
+    path += url.path;
+    typeName = hasContentType(request.headers);
+    if (typeName) {
+      type = request.headers[typeName];
+    } else if (request.body) {
+      type = request.headers['Content-Type'] = 'text/plain; charset=UTF-8';
+    } else {
+      type = '';
+    }
+    type = type.replace(/utf-/, 'UTF-');
     request.headers['x-amz-date'] = new Date().toUTCString();
     amz = [];
     _ref = request.headers;
@@ -1298,20 +1305,15 @@ init = function() {
         amz.push(header.toLowerCase() + ":" + value);
       }
     }
-    message = [request.method, "", type, "", amz.join("\n"), url.path].join("\n");
+    message = [request.method, "", type, "", amz.join("\n"), path].join("\n");
     request.headers["Authorization"] = "AWS " + config.access + ":" + (sign(config.secret, message));
   }, 0);
   return xhook.after(function(request, response) {
-    var h, json, obj, type, typeName, xml;
+    var json, obj, type, typeName, xml;
     if (!s3hook.xml2json) {
       return;
     }
-    typeName = null;
-    for (h in response.headers) {
-      if (/^content-type$/i.test(h)) {
-        typeName = h;
-      }
-    }
+    typeName = hasContentType(response.headers);
     if (!typeName) {
       return;
     }
@@ -1326,6 +1328,15 @@ init = function() {
       } catch (_error) {}
     }
   });
+};
+
+hasContentType = function(headers) {
+  var h;
+  for (h in headers) {
+    if (/^content-type$/i.test(h)) {
+      return h;
+    }
+  }
 };
 
 s3hook = set = function(access, secret) {
@@ -1358,9 +1369,10 @@ proxy = function(url) {
   if (!(p && p.path)) {
     return;
   }
-  slaves = {};
   slaves[p.origin] = p.path;
-  return xdomain(slaves);
+  return xdomain({
+    slaves: slaves
+  });
 };
 
 s3hook.xml2json = true;
@@ -1377,9 +1389,16 @@ s3hook.encoding = encoding;
 
 s3hook.hashing = hashing;
 
-s3hook.endpoints = endpoints;
-
 s3hook.proxy = proxy;
+
+s3hook.endpoints = function() {
+  var e, s;
+  e = [];
+  for (s in slaves) {
+    e.push(s);
+  }
+  return e;
+};
 
 window.s3hook = s3hook;
 }(window,document));
