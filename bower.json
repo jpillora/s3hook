@@ -1,0 +1,12 @@
+{
+  "name": "jpillora/s3hook",
+  "version": "0.3.0",
+  "main": "dist/0.3/s3hook.js",
+  "description": "Transparent Client-side S3 Request Signing",
+  "license": "MIT",
+  "ignore": [
+    "!dist/0.3/s3hook.js"
+  ],
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -3,8 +3,8 @@ SECRET_KEY = 'secretAccessKey'
 
 #setup xdomain
 slaves =
-  "https://s3.amazonaws.com":"/jpillora-usa/xdomain/proxy.html",
-  "https://s3-ap-southeast-2.amazonaws.com":"/jpillora-aus/xdomain/proxy.html"
+  "https://s3.amazonaws.com":"/jpillora-usa/xdomain/0.6/proxy.html",
+  "https://s3-ap-southeast-2.amazonaws.com":"/jpillora-aus/xdomain/0.6/proxy.html"
 
 #setup xdomain AFTER s3hook
 xdomain { slaves }
@@ -19,7 +19,7 @@ sign = (key, str) ->
 
 #setup xhr hook
 init = ->
-  init = -> #noop
+  init.d = true
   xhook.before (request) ->
 
     #parse url
@@ -35,13 +35,11 @@ init = ->
 
     unless config
       return
-
     #calculated path
     path = ''
     if /https?:\/\/(([^\.]+)\.)s3[\w-]*\.amazonaws.com/.test url.origin
       path += '/' + RegExp.$2
     path += url.path
-
     #content type headers
     typeName = hasContentType request.headers
     if typeName 
@@ -51,21 +49,15 @@ init = ->
     else
       type = ''
     type = type.replace /utf-/, 'UTF-'
-
     #require date header
     request.headers['x-amz-date'] = new Date().toUTCString()
-
     #extract amz headers
     amz = []
     for header,value of request.headers
       if /^x-amz/i.test(header)
         amz.push header.toLowerCase()+":"+value
-
     #sign request
     message = [request.method, "", type, "", amz.join("\n"), path].join("\n")
-
-    # console.log "SIGNING\n===\n#{message}\n===\n"
-
     #finally, sign and set
     request.headers["Authorization"] =  "AWS #{config.access}:#{sign(config.secret, message)}" 
     return
@@ -74,12 +66,9 @@ init = ->
 
   #convert response xml to json
   xhook.after (request, response) ->
-
     return unless s3hook.xml2json
-
     typeName = hasContentType response.headers
     return unless typeName
-
     type = response.headers[typeName]
     if /\/xml$/.test type
       try
@@ -89,6 +78,8 @@ init = ->
         response.headers[typeName] = 'application/json'
         response.text = json
     return
+
+init.d = false
 
 #private helpers
 
@@ -105,7 +96,7 @@ clear = ->
   add 'DEFAULT', access, secret
 add = (name, access, secret, path = /.*/) ->
   configs[name] = {access, secret, path}
-  init()
+  init() unless init.d
   return
 remove = (name) ->
   delete configs[name]

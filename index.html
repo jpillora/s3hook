@@ -1,8 +1,8 @@
 <html>
 <head>
   <title>S3 Hook Demo</title>
-  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
-  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap-theme.min.css">
 
   <style type="text/css">
     body {
@@ -25,6 +25,14 @@
     }
     .send.btn {
       width: 200px
+    }
+    .file.btn {
+      margin: 10px;
+    }
+    .dropzone {
+      border-radius: 5px;
+      margin: 5px;
+      padding: 10px;
     }
     .button-box {
       font-weight: normal !important;
@@ -73,10 +81,28 @@
              ng-keydown="$event.keyCode == 13 && run()"
              ng-model="path" ng-change="setURL()">
 
-      <textarea type="text" class="form-control"
-             placeholder="Request Body"
-             ng-show="method != 'GET' && method != 'DELETE'"
-             ng-model="body"></textarea>
+      <div ng-show="method != 'GET' && method != 'DELETE'">
+
+        <div>
+          <button type="button" class="file btn btn-default btn-xs"
+            ng-click="fileBody = !fileBody"
+            ng-class="{active:fileBody}"
+            >Upload File</button>
+        </div>  
+
+        <p class="dropzone"
+            ng-show="fileBody"
+            ng-class="hover && 'bg-primary' || 'bg-info'"
+            ng-bind="filePath || 'Drop a file here...'"></p>
+
+        <textarea type="text" class="form-control"
+               ng-show="!fileBody"
+               placeholder="Request Body"
+               ng-model="body"></textarea>
+
+      </div>
+
+
 
       <div class="row" ng-repeat="header in headers">
         <div class="col-md-6">
@@ -122,10 +148,10 @@
     </div>
   </div>
 
-  <script type="text/javascript" src="dist/0.2/s3hook.js"></script>
+  <script type="text/javascript" src="dist/0.3/s3hook.js"></script>
 
   <script type="text/javascript"
-          src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.0-rc.2/angular.js"></script>
+          src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular.js"></script>
 
   <script type="text/javascript">
     angular.module('s3-demo', []).run(function($rootScope, $timeout, $http) {
@@ -133,6 +159,7 @@
       scope = window.root = $rootScope;
       scope.hasLocalStorage = !!window.localStorage;
       scope.running = false;
+      scope.fileBody = true;
       scope.endpoints = s3hook.endpoints()
       scope.headers = [{}] //{name: 'x-amz-acl', value: 'public-read'}, 
       scope.methods = [
@@ -185,27 +212,30 @@
 
         scope.running = true;
 
-        headers = {}
+
+        var xhr = new XMLHttpRequest();
+
+        xhr.open(scope.method, scope.url);
+
         for(var i in scope.headers) {
           var h = scope.headers[i], n = h.name, v = h.value;
-          if(n && v) headers[n] = v;
+          if(n && v)
+            xhr.setRequestHeader(n, v);
         }
 
-        $http({ 
-          method: scope.method, 
-          url: scope.url,
-          data: scope.body,
-          headers: headers
-        }).success(gotResponse)
-          .error(gotResponse);
 
-        function gotResponse(data, status, headers, config) {
-          headers = headers();
-          scope.responseCode = status;
-          scope.responseHeaders = xhook.headers(headers);
-          scope.responseText = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        xhr.onreadystatechange = function() {
+          if(xhr.readyState !== 4) return;
+
+          scope.responseCode = xhr.status;
+          scope.responseHeaders = xhr.getAllResponseHeaders();
+          // scope.responseText = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+          scope.responseText = xhr.responseText;
           scope.running = false;
-        }
+          scope.$apply();
+        } 
+
+        xhr.send(scope.fileBody ? scope.file : scope.body);
       };
 
       $timeout(function() {
@@ -217,6 +247,32 @@
         }
         scope.setURL();
       });
+    }).directive('dropzone', function($rootScope) {
+      var scope = $rootScope;
+      return {
+        restrict: 'C',
+        link: function(sc, elem, attr) {
+          var dropper = elem[0]
+          dropper.ondragover = function () {
+            scope.hover = true;
+            scope.$apply();
+            return false;
+          };
+          dropper.ondragend = function () { 
+            scope.hover = false;
+            scope.$apply();
+            return false;
+          };
+          dropper.ondrop = function (e) {
+            e.preventDefault();
+            var file = e.dataTransfer.files[0];
+            scope.file = file;
+            scope.filePath = file.name;
+            scope.$apply();
+            return false;
+          };
+        }
+      }
     });
   </script>
 </body>
