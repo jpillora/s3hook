@@ -38,7 +38,7 @@ $.ajax({type:'PUT', url:'https://s3.amazonaws.com/jpillora-usa/foo.txt', data:'h
 
 ## Demo
 
-### [Serverless S3 Client - http://jpillora.com/s3hook/](http://jpillora.com/s3hook/)
+### [Serverless S3 Client](http://jpillora.com/s3hook)
 
 ## Download
 
