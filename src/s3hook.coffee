@@ -93,7 +93,7 @@ hasContentType = (headers) ->
 s3hook = set = (access, secret) ->
   add 'DEFAULT', access, secret
 clear = ->
-  add 'DEFAULT', access, secret
+  add 'DEFAULT', null, null
 add = (name, access, secret, path = /.*/) ->
   configs[name] = {access, secret, path}
   init() unless init.d

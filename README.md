@@ -74,7 +74,7 @@ So, to add your own, create a `https://MY-BUCKET.s3.amazonaws.com/MY/PATH/proxy.
 
 ``` html
 <!DOCTYPE HTML>
-<script src="http://s3.amazonaws.com/jpillora-usa/xdomain/0.5.min.js" master="*"></script>
+<script src="http://s3.amazonaws.com/jpillora-usa/xdomain/0.6.min.js" master="*"></script>
 ```
 
 Then add it:

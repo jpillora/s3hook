@@ -1,0 +1,89 @@
+!!!5
+html
+  head
+    title S3 Hook Demo
+    link(rel='stylesheet', href='//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css')
+    link(rel='stylesheet', href='//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap-theme.min.css')
+    link(rel="stylesheet", href="css/app.css")
+  body(ng-app='s3-demo')
+    a(href='https://github.com/jpillora/s3hook')
+      img(style='position: fixed; top: 0; right: 0; border: 0; z-index: 99999;', src='https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png', alt='Fork me on GitHub')
+    .container(ng-class="{loading:loading}")
+      nav.navbar.navbar-default(role='navigation')
+        .navbar-header
+          .navbar-brand A Serverless Client for AWS Simple Storage Service
+      .inputs
+        input.form-control(type='text', placeholder='AWS Access key', ng-model='access', ng-change='setKeys()')
+        input.form-control(type='text', placeholder='AWS Secret key', ng-model='secret', ng-change='setKeys()')
+        .button-box(ng-show='hasLocalStorage')
+          input#rememberKeys(type='checkbox', ng-model='rememberKeys', ng-change='toggleKeys()')
+          label(for='rememberKeys') Keep keys in Local Storage
+        select(ng-options='s for s in methods', ng-model='method')
+        select(ng-options='s for s in endpoints', ng-model='endpoint', ng-change='setURL()')
+        input.form-control(type='text', placeholder='Request Path', ng-init='path="my-awesome-bucket/my-secret-file.txt"', ng-keydown='$event.keyCode == 13 && run()', ng-model='path', ng-change='setURL()')
+
+        div.body(ng-show='method != "GET" && method != "DELETE"')
+          div.toggle
+            button.file.btn.btn-default.btn-xs(type='button', ng-click='fileBody = !fileBody', ng-class='{active:fileBody}') Upload File
+          p.dropzone(ng-show='fileBody', ng-class='hover && "bg-primary" || "bg-info"', ng-bind='filePath || "Drop a file here"')
+          textarea.form-control(type='text', ng-show='!fileBody', placeholder='Request Body', ng-model='body')
+        .row(ng-repeat='header in headers')
+          .col-md-6
+            input.form-control(type='text', placeholder='Header name', ng-model='header.name', ng-change='updateHeaders()', ng-keydown='$event.keyCode == 13 && run()')
+          .col-md-6
+            input.form-control(type='text', placeholder='Header value', ng-model='header.value', ng-change='updateHeaders()', ng-keydown='$event.keyCode == 13 && run()')
+
+        .row.prog(ng-show="loading && (upProgress > 0 || downProgress > 0)")
+          .col-md-6
+            p Upload
+            .progress.progress-striped.active
+              .progress-bar(role='progressbar', ng-style='{width: upProgress+"%"}')
+          .col-md-6
+            p Download
+            .progress.progress-striped.active
+              .progress-bar(role='progressbar', ng-style='{width: downProgress+"%"}')
+
+        div(style='text-align: center;')
+          
+          button.btn.send.navbar-btn(type='button',
+            ng-disabled='loading || !access || !secret',
+            ng-class='!loading && "btn-primary" || "btn-default"'
+            ng-click='send()') Send
+
+          button.btn.send.navbar-btn(type='button',
+            ng-disabled='!loading || !access || !secret',
+            ng-class='loading && "btn-danger" || "btn-default"'
+            ng-click='abort()') Abort
+
+      .output
+        | Request URL:
+        br
+        a(ng-href='{{url || "javascript:void 0"}}')
+          pre(ng-bind='url || "..."')
+        | Response Code:
+        br
+        pre.result(ng-bind='responseCode || "..."')
+        | Response Headers:
+        br
+        pre.result(ng-bind='responseHeaders || "..."')
+        | Response Text:
+        br
+        pre.result(ng-bind='responseText')
+        span.muted
+          | Note:
+          code */xml
+          | is silently converted to
+          code application/json
+          | unless
+          code s3hook.xml2json
+          | is set to
+          code false
+          | . For API information see 
+          a(href='http://docs.aws.amazon.com/AmazonS3/latest/API/APIRest.html', target='_blank')
+            | S3 REST API Docs
+          | .
+
+
+    script(type='text/javascript', src='../dist/0.3/s3hook.js')
+    script(type='text/javascript', src='//ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular.js')
+    script(src="js/app.js")

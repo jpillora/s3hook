@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>S3 Hook Demo</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="css/app.css">
+  </head>
+  <body ng-app="s3-demo"><a href="https://github.com/jpillora/s3hook"><img style="position: fixed; top: 0; right: 0; border: 0; z-index: 99999;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+    <div ng-class="{loading:loading}" class="container">
+      <nav role="navigation" class="navbar navbar-default">
+        <div class="navbar-header">
+          <div class="navbar-brand">A Serverless Client for AWS Simple Storage Service</div>
+        </div>
+      </nav>
+      <div class="inputs">
+        <input type="text" placeholder="AWS Access key" ng-model="access" ng-change="setKeys()" class="form-control">
+        <input type="text" placeholder="AWS Secret key" ng-model="secret" ng-change="setKeys()" class="form-control">
+        <div ng-show="hasLocalStorage" class="button-box">
+          <input id="rememberKeys" type="checkbox" ng-model="rememberKeys" ng-change="toggleKeys()">
+          <label for="rememberKeys">Keep keys in Local Storage</label>
+        </div>
+        <select ng-options="s for s in methods" ng-model="method"></select>
+        <select ng-options="s for s in endpoints" ng-model="endpoint" ng-change="setURL()"></select>
+        <input type="text" placeholder="Request Path" ng-init="path=&quot;my-awesome-bucket/my-secret-file.txt&quot;" ng-keydown="$event.keyCode == 13 &amp;&amp; run()" ng-model="path" ng-change="setURL()" class="form-control">
+        <div ng-show="method != &quot;GET&quot; &amp;&amp; method != &quot;DELETE&quot;" class="body">
+          <div class="toggle">
+            <button type="button" ng-click="fileBody = !fileBody" ng-class="{active:fileBody}" class="file btn btn-default btn-xs">Upload File</button>
+          </div>
+          <p ng-show="fileBody" ng-class="hover &amp;&amp; &quot;bg-primary&quot; || &quot;bg-info&quot;" ng-bind="filePath || &quot;Drop a file here&quot;" class="dropzone"></p>
+          <textarea type="text" ng-show="!fileBody" placeholder="Request Body" ng-model="body" class="form-control"></textarea>
+        </div>
+        <div ng-repeat="header in headers" class="row">
+          <div class="col-md-6">
+            <input type="text" placeholder="Header name" ng-model="header.name" ng-change="updateHeaders()" ng-keydown="$event.keyCode == 13 &amp;&amp; run()" class="form-control">
+          </div>
+          <div class="col-md-6">
+            <input type="text" placeholder="Header value" ng-model="header.value" ng-change="updateHeaders()" ng-keydown="$event.keyCode == 13 &amp;&amp; run()" class="form-control">
+          </div>
+        </div>
+        <div ng-show="loading &amp;&amp; (upProgress &gt; 0 || downProgress &gt; 0)" class="row prog">
+          <div class="col-md-6">
+            <p>Upload</p>
+            <div class="progress progress-striped active">
+              <div role="progressbar" ng-style="{width: upProgress+&quot;%&quot;}" class="progress-bar"></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <p>Download</p>
+            <div class="progress progress-striped active">
+              <div role="progressbar" ng-style="{width: downProgress+&quot;%&quot;}" class="progress-bar"></div>
+            </div>
+          </div>
+        </div>
+        <div style="text-align: center;">
+          <button type="button" ng-disabled="loading || !access || !secret" ng-class="!loading &amp;&amp; &quot;btn-primary&quot; || &quot;btn-default&quot;" ng-click="send()" class="btn send navbar-btn">Send</button>
+          <button type="button" ng-disabled="!loading || !access || !secret" ng-class="loading &amp;&amp; &quot;btn-danger&quot; || &quot;btn-default&quot;" ng-click="abort()" class="btn send navbar-btn">Abort</button>
+        </div>
+      </div>
+      <div class="output">Request URL:<br><a ng-href="{{url || &quot;javascript:void 0&quot;}}">
+          <pre ng-bind="url || &quot;...&quot;"></pre></a>Response Code:<br>
+        <pre ng-bind="responseCode || &quot;...&quot;" class="result"></pre>Response Headers:<br>
+        <pre ng-bind="responseHeaders || &quot;...&quot;" class="result"></pre>Response Text:<br>
+        <pre ng-bind="responseText" class="result"></pre><span class="muted">Note:<code>*/xml</code>is silently converted to<code>application/json</code>unless<code>s3hook.xml2json</code>is set to<code>false</code>. For API information see <a href="http://docs.aws.amazon.com/AmazonS3/latest/API/APIRest.html" target="_blank">S3 REST API Docs</a>.</span>
+      </div>
+    </div>
+    <script type="text/javascript" src="../dist/0.3/s3hook.js"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

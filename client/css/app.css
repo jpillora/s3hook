@@ -1,0 +1,87 @@
+
+/* line 1 : /Users/jpillora/.grunt-sources/web/node_modules/grunt-contrib-stylus/node_modules/stylus/lib/functions/index.styl */
+
+/* line 1 : /Users/jpillora/Code/JavaScript/s3hook/client/src/styles/app.styl */
+body {
+  padding-top: 20px;
+}
+
+/* line 4 : /Users/jpillora/Code/JavaScript/s3hook/client/src/styles/app.styl */
+.container {
+  padding-bottom: 60px;
+}
+
+/* line 7 : /Users/jpillora/Code/JavaScript/s3hook/client/src/styles/app.styl */
+.inputs input,
+.inputs select,
+.inputs textarea,
+.inputs .button-box {
+  margin-top: 5px;
+}
+
+/* line 10 : /Users/jpillora/Code/JavaScript/s3hook/client/src/styles/app.styl */
+textarea {
+  font-family: Courier;
+}
+
+/* line 13 : /Users/jpillora/Code/JavaScript/s3hook/client/src/styles/app.styl */
+select {
+  width: 100%;
+  font-size: 14px;
+  border: thin solid #808080;
+  height: 32px;
+}
+
+/* line 19 : /Users/jpillora/Code/JavaScript/s3hook/client/src/styles/app.styl */
+
+/* line 20 : /Users/jpillora/Code/JavaScript/s3hook/client/src/styles/app.styl */
+.send.btn {
+  width: 200px;
+}
+
+/* line 23 : /Users/jpillora/Code/JavaScript/s3hook/client/src/styles/app.styl */
+
+/* line 24 : /Users/jpillora/Code/JavaScript/s3hook/client/src/styles/app.styl */
+.file.btn {
+  margin: 10px;
+}
+
+/* line 27 : /Users/jpillora/Code/JavaScript/s3hook/client/src/styles/app.styl */
+.body {
+  position: relative;
+}
+
+/* line 31 : /Users/jpillora/Code/JavaScript/s3hook/client/src/styles/app.styl */
+.body .toggle {
+  position: absolute;
+  right: 10px;
+  top: 3px;
+}
+
+/* line 36 : /Users/jpillora/Code/JavaScript/s3hook/client/src/styles/app.styl */
+.body .dropzone {
+  border-radius: 5px;
+  margin: 5px;
+  padding: 25px 10px;
+  text-align: center;
+  font-style: italic;
+}
+
+/* line 43 : /Users/jpillora/Code/JavaScript/s3hook/client/src/styles/app.styl */
+.button-box {
+  font-weight: normal !important;
+  font-style: italic;
+  padding-left: 20px;
+}
+
+/* line 48 : /Users/jpillora/Code/JavaScript/s3hook/client/src/styles/app.styl */
+.prog p {
+  font-style: italic;
+  font-size: 0.8em;
+  margin: 5px 50%;
+}
+
+/* line 53 : /Users/jpillora/Code/JavaScript/s3hook/client/src/styles/app.styl */
+.loading .result {
+  background-color: rgba(173,216,230,0.3);
+}
