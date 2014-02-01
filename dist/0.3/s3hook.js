@@ -517,9 +517,10 @@
 
 // XDomain - v0.6.0 - https://github.com/jpillora/xdomain
 // Jaime Pillora <dev@jpillora.com> - MIT Copyright 2014
-(function(window,undefined) {// XHook - v1.1.3 - https://github.com/jpillora/xhook
+(function(window,undefined) {// XHook - v1.1.4 - https://github.com/jpillora/xhook
 // Jaime Pillora <dev@jpillora.com> - MIT Copyright 2014
-(function(window,undefined) {var AFTER, BEFORE, COMMON_EVENTS, EventEmitter, FIRE, OFF, ON, READY_STATE, UPLOAD_EVENTS, XMLHTTP, convertHeaders, document, fakeEvent, mergeObjects, proxyEvents, slice, xhook, _base;
+(function(window,undefined) {var AFTER, BEFORE, COMMON_EVENTS, EventEmitter, FIRE, FormData, OFF, ON, READY_STATE, UPLOAD_EVENTS, XMLHTTP, convertHeaders, document, fakeEvent, mergeObjects, proxyEvents, slice, xhook, _base,
+  __slice = [].slice;
 
 document = window.document;
 
@@ -536,6 +537,8 @@ OFF = 'removeEventListener';
 FIRE = 'dispatchEvent';
 
 XMLHTTP = 'XMLHttpRequest';
+
+FormData = 'FormData';
 
 UPLOAD_EVENTS = ['load', 'loadend', 'loadstart'];
 
@@ -717,6 +720,20 @@ convertHeaders = xhook.headers = function(h, dest) {
   }
 };
 
+xhook[FormData] = window[FormData];
+
+window[FormData] = function() {
+  var _this = this;
+  this.fd = new xhook[FormData];
+  this.entries = [];
+  this.append = function() {
+    var args;
+    args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+    _this.entries.push(args);
+    return _this.fd.append.apply(_this.fd, args);
+  };
+};
+
 xhook[XMLHTTP] = window[XMLHTTP];
 
 window[XMLHTTP] = function() {
@@ -855,6 +872,9 @@ window[XMLHTTP] = function() {
         value = _ref2[header];
         xhr.setRequestHeader(header, value);
       }
+      if (request.body instanceof window[FormData]) {
+        request.body = request.body.fd;
+      }
       xhr.send(request.body);
     };
     hooks = xhook.listeners(BEFORE);
@@ -917,7 +937,7 @@ window[XMLHTTP] = function() {
 
 (this.define || Object)((this.exports || this).xhook = xhook);
 }(this));
-var CHECK_INTERVAL, COMPAT_VERSION, XD_CHECK, addMasters, addSlaves, attrs, connect, console, createSocket, currentOrigin, feature, fn, frames, getFrame, guid, handler, initMaster, initSlave, jsonEncode, k, listen, log, masters, onMessage, parseUrl, prefix, prep, script, slaves, slice, sockets, startPostMessage, strip, toRegExp, warn, xdomain, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
+var CHECK_INTERVAL, COMPAT_VERSION, XD_CHECK, addMasters, addSlaves, attrs, connect, console, createSocket, currentOrigin, feature, fn, frames, getFrame, guid, handler, initMaster, initSlave, instOf, jsonEncode, k, listen, log, masters, onMessage, parseUrl, prefix, prep, script, slaves, slice, sockets, startPostMessage, strip, toRegExp, warn, xdomain, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
 
 slaves = null;
 
@@ -978,7 +998,10 @@ initMaster = function() {
     });
     obj = strip(request);
     obj.headers = request.headers;
-    if (request.body instanceof Uint8Array || request.body instanceof FormData) {
+    if (instOf(request.body, 'FormData')) {
+      obj.body = ["XD_FD", request.body.entries];
+    }
+    if (instOf(request.body, 'Uint8Array')) {
       obj.body = request.body;
     }
     socket.emit("request", obj);
@@ -1021,7 +1044,7 @@ initSlave = function() {
       return;
     }
     socket.once("request", function(req) {
-      var k, p, v, xhr, _ref;
+      var args, fd, k, p, v, xhr, _i, _len, _ref, _ref1;
       log("request: " + req.method + " " + req.url);
       p = parseUrl(req.url);
       if (!(p && pathRegex.test(p.path))) {
@@ -1068,6 +1091,15 @@ initSlave = function() {
       for (k in _ref) {
         v = _ref[k];
         xhr.setRequestHeader(k, v);
+      }
+      if (req.body instanceof Array && req.body[0] === "XD_FD") {
+        fd = new xhook.FormData();
+        _ref1 = req.body[1];
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          args = _ref1[_i];
+          fd.append.apply(fd, args);
+        }
+        req.body = fd;
       }
       xhr.send(req.body || null);
     });
@@ -1251,6 +1283,13 @@ for (_i = 0, _len = _ref.length; _i < _len; _i++) {
     return;
   }
 }
+
+instOf = function(obj, global) {
+  if (typeof window[global] !== "function") {
+    return false;
+  }
+  return obj instanceof window[global];
+};
 
 COMPAT_VERSION = "V1";
 
